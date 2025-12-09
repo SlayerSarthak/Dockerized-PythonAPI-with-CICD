@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  # 1. The Python API Service
+  api:
+    # Instructs Docker Compose to look for the Dockerfile in the current directory
+    build: . 
+    
+    # Expose the API's port (5000) to the host runner for testing
+    ports:
+      - "5000:5000"
+      
+    # Environment variables passed to the Python app (app.py)
+    environment:
+      # IMPORTANT: 'db' is the name of the PostgreSQL service below
+      DB_HOST: db 
+      DB_PORT: 5432
+      DB_NAME: ci_database
+      
+    # Ensures the database is up before trying to start the API
+    depends_on:
+      - db
+    
+  # 2. The PostgreSQL Database Service
+  db:
+    # Using a lightweight, official PostgreSQL image
+    image: postgres:15-alpine
+    
+    # Required environment variables for PostgreSQL setup
+    environment:
+      POSTGRES_USER: ci_user
+      POSTGRES_PASSWORD: ci_password
+      POSTGRES_DB: ci_database
+      
+    # Volumes are used to save data, even if the container restarts
+    # Although this data is ephemeral in the GitHub Actions runner, it's good practice.
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+# Define the volume
+volumes:
+  postgres_data:
