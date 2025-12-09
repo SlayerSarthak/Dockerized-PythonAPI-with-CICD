@@ -1,0 +1,33 @@
+name: CI - Docker Compose Integration Test
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  integration-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      # STEP 1: Checkout repository
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      # STEP 2: Build and start services (API + DB)
+      - name: Start application stack
+        run: docker-compose up -d --build
+
+      # STEP 3: Wait for containers to become ready
+      - name: Wait for services
+        run: sleep 15
+
+      # STEP 4: Run integration tests inside API container
+      - name: Run integration tests
+        run: docker-compose exec -T api python test_app.py
+
+      # STEP 5: Stop and cleanup containers
+      - name: Shutdown services
+        if: always()
+        run: docker-compose down
